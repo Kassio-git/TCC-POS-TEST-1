@@ -33,8 +33,10 @@ const csvWriter = createCsvWriter({
  */
 const readEvents = () => {
     return new Promise((resolve, reject) => {
+        const timestamp = new Date().toISOString();
         const results = [];
         if (!fs.existsSync(CSV_PATH)) {
+            console.log(`[${timestamp}] 📝 CSV file doesn't exist, creating empty one...`);
             // Se não existe arquivo, cria um vazio e retorna lista vazia
             csvWriter.writeRecords([]).then(() => resolve([]));
             return;
@@ -48,8 +50,16 @@ const readEvents = () => {
                 data.gratuito = data.gratuito === 'true';
                 results.push(data);
             })
-            .on('end', () => resolve(results))
-            .on('error', (error) => reject(error));
+            .on('end', () => {
+                const timestamp = new Date().toISOString();
+                console.log(`[${timestamp}] 📖 Read ${results.length} events from CSV`);
+                resolve(results);
+            })
+            .on('error', (error) => {
+                const timestamp = new Date().toISOString();
+                console.error(`[${timestamp}] ❌ Error reading CSV:`, error.message);
+                reject(error);
+            });
     });
 };
 
@@ -58,6 +68,8 @@ const readEvents = () => {
  * Inclui proteção contra dados corrompidos (Guard Clauses).
  */
 const saveEvents = async (events) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] 💾 Saving ${events.length} events to CSV...`);
     const today = startOfDay(new Date());
 
     const validEvents = events.filter(event => {
@@ -91,6 +103,8 @@ const saveEvents = async (events) => {
 
     // Escreve apenas os eventos válidos no CSV
     await csvWriter.writeRecords(validEvents);
+    const timestamp2 = new Date().toISOString();
+    console.log(`[${timestamp2}] ✅ Saved ${validEvents.length} valid events (filtered ${events.length - validEvents.length} invalid)`);
 };
 
 // ESTA É A LINHA IMPORTANTE QUE ESTAVA FALTANDO OU COM PROBLEMA

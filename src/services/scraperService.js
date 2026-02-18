@@ -1,5 +1,6 @@
 const SerpApi = require('google-search-results-nodejs');
 const { readEvents, saveEvents } = require('./databaseService');
+const { scrapeAllWebsites } = require('./webScraperService');
 
 // API Key fornecida pelo usuário
 const API_KEY = "81bc9cb3c616192119614b3443dec5d664a906e1f4244cd713521feb42678e11";
@@ -129,11 +130,58 @@ const scrapeEvents = async () => {
         const updatedList = [...currentDb, ...allNewEvents];
         await saveEvents(updatedList);
         console.log(`✅ SUCESSO: ${allNewEvents.length} novos eventos salvos no total.`);
-        return updatedList;
     } else {
-        console.log('zzz Nenhum evento novo encontrado após varredura.');
-        return currentDb;
+        console.log('zzz Nenhum evento novo encontrado após varredura do Google.');
     }
+
+    // 5. Buscar também das plataformas de eventos (Sympla, Ticket, Ingresso)
+    console.log('\n🌍 Agora buscando eventos das plataformas web...\n');
+    try {
+        const webEvents = await scrapeAllWebsites();
+        
+        // Converte eventos web para o mesmo formato
+        const formattedWebEvents = webEvents.map((event, index) => {
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            const fallbackDate = `${day}-${month}-${year}`;
+
+            return {
+                id: String(nextId++).padStart(3, '0'),
+                nome: event.name || 'Evento sem nome',
+                descricao: (event.location || 'Local não especificado'),
+                data: event.date || fallbackDate,
+                local: event.location || 'Recife',
+                horario: event.date || 'Horário a confirmar',
+                gratuito: false,
+                tipo: "Plataforma Web",
+                link: event.link || "#",
+                saved: false
+            };
+        });
+
+        // Deduplicar com eventos já salvos
+        const uniqueWebEvents = formattedWebEvents.filter(webEvent =>
+            !updatedList.some(existing =>
+                existing.nome && webEvent.nome && 
+                existing.nome.toLowerCase() === webEvent.nome.toLowerCase()
+            )
+        );
+
+        if (uniqueWebEvents.length > 0) {
+            const finalList = [...updatedList, ...uniqueWebEvents];
+            await saveEvents(finalList);
+            console.log(`✅ Adicionados ${uniqueWebEvents.length} eventos das plataformas web.`);
+            return finalList;
+        }
+
+    } catch (error) {
+        console.error('⚠️  Erro ao buscar das plataformas web:', error.message);
+        console.log('Continuando com eventos do Google apenas...');
+    }
+
+    return allNewEvents.length > 0 ? [...currentDb, ...allNewEvents] : currentDb;
 };
 
 module.exports = { scrapeEvents };

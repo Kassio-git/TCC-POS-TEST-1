@@ -87,13 +87,15 @@ Pré-requisitos: Node.js instalado.
 git clone [https://github.com/GeorgesBallister/recife-events-mvp.git](https://github.com/GeorgesBallister/recife-events-mvp.git)
 
 # 2. Entre na pasta
-cd recife-events-mvp
+## cd recife-events-mvp
+cd /workspaces/TCC-POS-TEST-1/src
 
 # 3. Instale as dependências
 npm install
 
 # 4. Execute o servidor
-npm start
+## npm start
+node app.js
 
 # 5. Acesse no navegador
 http://localhost:3000

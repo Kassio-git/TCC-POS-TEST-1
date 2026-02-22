@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-br">
 
 <head>
@@ -13,7 +13,7 @@
 
     <header class="pe-header">
         <div class="container">
-            <h1>Eventos Recife ☀️☂️</h1>
+            <h1>Eventos Recife ☀️☂️🌕</h1>
             <p>Descubra o que fazer na Veneza Brasileira</p>
             <button id="btn-sync" onclick="syncEvents()">🔄 Sincronizar Novos Eventos</button>
         </div>
@@ -59,6 +59,8 @@
             <button class="tab-btn" onclick="switchTab('saved')">Meus Interesses ❤️</button>
         </div>
 
+        <p id="events-count" class="events-count">0 eventos na página</p>
+
         <div id="events-grid" class="events-grid">
             <p class="loading">Carregando eventos...</p>
         </div>
@@ -68,3 +70,5 @@
 </body>
 
 </html>
+
+

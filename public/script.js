@@ -1,5 +1,16 @@
-let allEvents = [];
+﻿let allEvents = [];
 let currentTab = 'all'; // 'all' or 'saved'
+
+function getSiteLabel(link) {
+    if (!link || link === '#') return '';
+    try {
+        const host = new URL(link).hostname.toLowerCase().replace(/^www\./, '');
+        if (host.endsWith('sympla.queue-it.net')) return 'sympla.com.br';
+        return host;
+    } catch (err) {
+        return '';
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchEvents();
@@ -54,6 +65,7 @@ async function toggleSave(id) {
 // Render Logic
 function renderEvents() {
     const grid = document.getElementById('events-grid');
+    const countLabel = document.getElementById('events-count');
     grid.innerHTML = '';
 
     // Filter Logic
@@ -84,12 +96,27 @@ function renderEvents() {
         return matchesSearch && matchesType && matchesStart && matchesEnd;
     });
 
+    // Sort by date ascending (dd-mm-yyyy -> Date)
+    filtered.sort((a, b) => {
+        const [da, ma, ya] = a.data.split('-').map(Number);
+        const [db, mb, yb] = b.data.split('-').map(Number);
+        const dateA = new Date(ya, ma - 1, da);
+        const dateB = new Date(yb, mb - 1, db);
+        return dateA - dateB;
+    });
+
     if (filtered.length === 0) {
+        if (countLabel) countLabel.innerText = '0 eventos na página';
         grid.innerHTML = '<p>Nenhum evento encontrado.</p>';
         return;
     }
 
+    if (countLabel) {
+        countLabel.innerText = `${filtered.length} evento${filtered.length > 1 ? 's' : ''} na página`;
+    }
+
     filtered.forEach(e => {
+        const siteLabel = getSiteLabel(e.link);
         const card = document.createElement('div');
         card.className = 'event-card';
         card.innerHTML = `
@@ -100,10 +127,11 @@ function renderEvents() {
                 </div>
                 <h3 class="card-title">${e.nome}</h3>
                 <div class="card-info">📍 ${e.local} | 🕒 ${e.horario}</div>
-                <div class="card-info">💰 ${e.gratuito ? 'Gratuito' : 'Pago'}</div>
+                <!-- Linha de preco desabilitada temporariamente -->
+                <!-- <div class="card-info">💰 ${e.gratuito ? 'Gratuito' : 'Pago'}</div> -->
                 
                 <div style="margin-top: 10px; display: flex; gap: 10px;">
-                    ${e.link && e.link !== '#' ? `<a href="${e.link}" target="_blank" class="btn-link">Ver mais ↗</a>` : ''}
+                    ${e.link && e.link !== '#' ? `<a href="${e.link}" target="_blank" class="btn-link">Ver mais: ${siteLabel || 'site'}</a>` : ''}
                 </div>
 
                 <p class="card-desc">${e.descricao}</p>
@@ -133,3 +161,4 @@ function switchTab(tab) {
 function applyFilters() {
     renderEvents();
 }
+
